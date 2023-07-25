@@ -36,7 +36,7 @@ public class TechController {
 
     private void getData(String html) {
         String regexSection = "(?<=Obowiązkowe)[\\s\\S]*?(?=posting-nice-to-have)";
-        String regexSkill = "class=\"ng-star-inserted\">[^<+]";
+        String regexSkill = "class=\"ng-star-inserted\">([^<]+)";
 
         Pattern patternSection = Pattern.compile(regexSection);
         Matcher matcherSection = patternSection.matcher(html);
@@ -46,12 +46,11 @@ public class TechController {
             Pattern patternSkill = Pattern.compile(regexSkill);
             Matcher matcherSkill = patternSkill.matcher(sectionHtml);
 
-            while (matcherSection.find()) {
+            while (matcherSkill.find()) {
                 String skill = matcherSkill.group(1);
                 System.out.println(skill);
             }
         }
-
     }
 
     private String getHtml(String url) throws IOException {
