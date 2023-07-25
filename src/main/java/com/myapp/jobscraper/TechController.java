@@ -4,10 +4,18 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
+import org.springframework.util.FileCopyUtils;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.annotation.Resources;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -29,36 +37,46 @@ public class TechController {
 //        techStack.setAppearances(5);
 //        techRepository.save(techStack);
 
-        List<String> urls = new ArrayList<>();
+        Resource resource = new ClassPathResource("url.txt");
+        String data = "";
+        try (Reader reader = new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8)) {
+            data = FileCopyUtils.copyToString(reader);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        String[] urls = data.split("\n");
 
-        String job1 = "https://nofluffjobs.com/pl/job/senior-fullstack-developer-java-kotlin-networkedassets-wroclaw";
-        String job2 = "https://nofluffjobs.com/pl/job/fullstack-developer-react-java-emagine-warszawa-1";
-        urls.add(job1);
-        urls.add(job2);
+//        String job1 = "https://nofluffjobs.com/pl/job/senior-fullstack-developer-java-kotlin-networkedassets-wroclaw";
+//        String job2 = "https://nofluffjobs.com/pl/job/fullstack-developer-react-java-emagine-warszawa-1";
+//        urls.add(job1);
+//        urls.add(job2);
 
         List<TechStack> techStacks = new ArrayList<>();
 
 
         for (String url : urls) {
-        String html = getHtml(url);
-        List<String> skills = getData(html);
+            String html = getHtml(url);
+            List<String> skills = getData(html);
 
-        skills.forEach(skill -> {
-           TechStack techStackToAdd = techStacks.stream()
-                    .filter(techStack -> techStack.getName().equals(skill))
-                    .findFirst()
-                    .orElseGet(() -> {
-                        TechStack newtechStack = new TechStack();
-                        newtechStack.setName(skill);
-                        return newtechStack;
-                    });
-            techStackToAdd.setAppearances(techStackToAdd.getAppearances() + 1);
-            techStacks.add(techStackToAdd);
-        });
+            skills.forEach(skill -> {
+                TechStack techStackToAdd = techStacks.stream()
+                        .filter(techStack -> techStack.getName()
+                                .equals(skill))
+                        .findFirst()
+                        .orElseGet(() -> {
+                            TechStack newtechStack = new TechStack();
+                            newtechStack.setName(skill);
+                            return newtechStack;
+                        });
+                techStackToAdd.setAppearances(techStackToAdd.getAppearances() + 1);
+                techStacks.add(techStackToAdd);
+            });
 
-        techRepository.saveAll(techStacks);
+            techRepository.saveAll(techStacks);
 
-    }}
+        }
+        System.out.println("THE END");
+    }
 
     private List<String> getData(String html) {
 
@@ -84,7 +102,8 @@ public class TechController {
     }
 
     private String getHtml(String url) throws IOException {
-        Document document = Jsoup.connect(url).get();
+        Document document = Jsoup.connect(url)
+                .get();
         return document.html();
     }
 }
